@@ -1,0 +1,13 @@
+cache/
+.next/cache/
+*.pack
+*.map
+*.cache
+.next/standalone/
+.next/server/chunks/
+node_modules/
+.git/
+*.log
+out/
+output/
+*.zip

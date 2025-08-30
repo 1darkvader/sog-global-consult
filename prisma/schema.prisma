@@ -1,0 +1,249 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  properties Property[]
+  inquiries  Inquiry[]
+  legalDocuments LegalDocument[]
+
+  @@map("users")
+}
+
+model Property {
+  id          String        @id @default(cuid())
+  title       String
+  description String
+  price       Int
+  location    String
+  address     String
+  latitude    Float?
+  longitude   Float?
+  type        PropertyType
+  status      PropertyStatus @default(AVAILABLE)
+  bedrooms    Int
+  bathrooms   Int
+  area        Int           // in square meters
+  parking     Int
+  featured    Boolean       @default(false)
+  soldDate    DateTime?
+
+  // Additional property details
+  yearBuilt   Int?
+  furnished   Boolean       @default(false)
+  petFriendly Boolean       @default(false)
+  garden      Boolean       @default(false)
+  balcony     Boolean       @default(false)
+
+  // SEO and metadata
+  slug        String        @unique
+  metaTitle   String?
+  metaDescription String?
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  createdBy   User          @relation(fields: [createdById], references: [id])
+  createdById String
+  images      PropertyImage[]
+  features    PropertyFeature[]
+  inquiries   Inquiry[]
+  views       PropertyView[]
+
+  @@map("properties")
+}
+
+model PropertyImage {
+  id          String   @id @default(cuid())
+  url         String
+  publicId    String   // Cloudinary public ID for deletion
+  caption     String?
+  isPrimary   Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId  String
+
+  @@map("property_images")
+}
+
+model PropertyFeature {
+  id          String   @id @default(cuid())
+  name        String
+  icon        String?
+
+  // Relations
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId  String
+
+  @@map("property_features")
+}
+
+model Inquiry {
+  id          String      @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  message     String
+  type        InquiryType @default(GENERAL)
+  status      InquiryStatus @default(NEW)
+
+  // Property specific inquiry
+  budgetMin   Int?
+  budgetMax   Int?
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  property    Property?   @relation(fields: [propertyId], references: [id])
+  propertyId  String?
+  user        User?       @relation(fields: [userId], references: [id])
+  userId      String?
+  responses   InquiryResponse[]
+
+  @@map("inquiries")
+}
+
+model InquiryResponse {
+  id          String   @id @default(cuid())
+  message     String
+  isFromAdmin Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  inquiry     Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  inquiryId   String
+
+  @@map("inquiry_responses")
+}
+
+model PropertyView {
+  id          String   @id @default(cuid())
+  ipAddress   String
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId  String
+
+  @@unique([propertyId, ipAddress])
+  @@map("property_views")
+}
+
+model Newsletter {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@map("newsletter")
+}
+
+model ContactSubmission {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  subject     String?
+  message     String
+  department  String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@map("contact_submissions")
+}
+
+// Enums
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum PropertyType {
+  APARTMENT
+  DUPLEX
+  MANSION
+  TERRACE
+  COMMERCIAL
+  LAND
+  PENTHOUSE
+  STUDIO
+}
+
+enum PropertyStatus {
+  AVAILABLE
+  SOLD
+  PENDING
+  RENTED
+  OFF_MARKET
+}
+
+enum InquiryType {
+  GENERAL
+  PROPERTY
+  CONSULTATION
+  VIEWING
+  INVESTMENT
+}
+
+enum InquiryStatus {
+  NEW
+  IN_PROGRESS
+  RESPONDED
+  CLOSED
+}
+
+model LegalDocument {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    LegalDocumentCategory
+  filePath    String   // URL to the uploaded document
+  fileName    String
+  fileSize    Int      // File size in bytes
+  mimeType    String   // Document MIME type
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdById String
+
+  @@map("legal_documents")
+}
+
+enum LegalDocumentCategory {
+  PRIVACY_POLICY
+  TERMS_OF_SERVICE
+  COMPANY_REGISTRATION
+  COMPLIANCE
+  CONTRACTS
+  POLICIES
+  OTHER
+}

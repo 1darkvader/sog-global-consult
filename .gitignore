@@ -40,4 +40,16 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# bun
+bun.lock
+
+# build outputs and archives
+output/
+output.zip
+*.zip
+
+# Large files
+*.tar.gz
+*.tgz
+
 /src/generated/prisma
